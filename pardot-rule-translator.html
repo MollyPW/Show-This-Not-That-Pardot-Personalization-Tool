@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pardot Personalization Rule Translator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2430; --paper:#FAF7F2; --line:#DCD5C6; --teal:#0F766E;
+    --amber:#B45309; --slate:#5B6472; --code-bg:#F0EDE4; --code-text:#3D3428;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .wrap{max-width:760px;margin:0 auto;padding:32px 16px 64px;}
+  header{border-bottom:2px solid var(--ink);padding-bottom:24px;margin-bottom:24px;}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--amber);font-weight:600;margin-bottom:8px;}
+  h1{font-family:'IBM Plex Mono',monospace;font-size:26px;margin:0;}
+  header p{color:var(--slate);font-size:14px;margin-top:10px;line-height:1.5;}
+
+  details.explainer{background:#fff;border:1px solid var(--line);border-radius:8px;margin-bottom:24px;}
+  details.explainer summary{cursor:pointer;padding:12px 16px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;}
+  details.explainer .body{padding:0 16px 16px;font-size:14px;line-height:1.6;color:var(--slate);}
+  details.explainer strong{color:var(--ink);}
+
+  .section-label{font-family:'IBM Plex Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--slate);font-weight:600;margin-bottom:12px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:24px;}
+  .card.top-ink{border-top:3px solid var(--ink);}
+  .card.top-slate{border-top:3px solid var(--slate);}
+
+  .toggle-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .toggle-btn{flex:1;min-width:140px;padding:9px 12px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--slate);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;cursor:pointer;}
+  .toggle-btn.active{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .toggle-btn.small{flex:none;min-width:0;padding:6px 12px;font-size:12px;}
+
+  label.field-label{display:block;font-size:12px;font-weight:600;color:var(--slate);margin-bottom:4px;}
+  input[type=text],input[type=number],textarea,select{
+    width:100%;padding:9px 10px;border-radius:6px;border:1px solid var(--line);
+    font-family:'IBM Plex Sans',sans-serif;font-size:14px;color:var(--ink);background:#fff;
+  }
+  textarea{resize:vertical;min-height:44px;}
+
+  .warning{display:flex;gap:8px;align-items:flex-start;background:#FFFBEB;border:1px solid var(--amber);color:#78350F;border-radius:6px;padding:10px 12px;font-size:13px;margin-bottom:12px;}
+  .warning.hidden{display:none;}
+
+  .rule-card{background:#fff;border:1px solid var(--line);border-left-width:4px;border-radius:8px;padding:14px;margin-bottom:12px;}
+  .rule-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .rule-label{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;}
+  .rule-actions button{background:none;border:none;cursor:pointer;color:var(--slate);padding:4px;font-size:14px;}
+  .rule-actions button.remove{color:#B91C1C;}
+  .rule-actions button:disabled{opacity:.25;cursor:default;}
+  .rule-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+  .rule-row select{flex:1;min-width:160px;}
+  .rule-row input{flex:1;min-width:120px;}
+  .content-label{font-size:12px;font-weight:600;color:var(--slate);margin-bottom:6px;}
+
+  #add-rule-btn{display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;border:1px solid var(--ink);color:var(--ink);background:#fff;border-radius:6px;padding:9px 14px;cursor:pointer;margin-bottom:24px;}
+
+  #generate-btn{display:block;width:100%;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;background:var(--ink);color:#fff;border:none;border-radius:8px;padding:14px;cursor:pointer;margin-bottom:8px;}
+  #validation-msg{color:#B91C1C;font-size:13px;margin-bottom:24px;display:none;}
+
+  #results{border-top:2px solid var(--ink);padding-top:24px;margin-top:16px;}
+  #results.hidden{display:none;}
+  .banner{display:flex;align-items:center;gap:10px;border-radius:8px;padding:12px 16px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;margin-bottom:20px;}
+  .banner.code{background:#FFFBEB;border:1px solid var(--amber);color:#78350F;}
+  .banner.dynamic{background:#ECFDF5;border:1px solid var(--teal);color:#064E3B;}
+
+  .out-section{margin-bottom:32px;}
+  .out-title{display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;margin-bottom:12px;}
+  .out-body{background:#FDFCFA;border:1px solid var(--line);border-radius:8px;padding:16px;}
+
+  ol.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;}
+  ol.steps li{display:flex;gap:10px;font-size:14px;line-height:1.6;}
+  .step-num{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;}
+
+  code.chip{background:var(--code-bg);color:var(--code-text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:2px 6px;border-radius:4px;}
+
+  .code-block{position:relative;background:var(--ink);border-radius:8px;overflow:hidden;}
+  .code-block pre{margin:0;padding:16px;color:#E8E4DA;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.6;overflow-x:auto;white-space:pre-wrap;}
+  .copy-btn{position:absolute;top:10px;right:10px;font-family:'IBM Plex Mono',monospace;font-size:12px;background:#fff;border:1px solid var(--line);color:var(--slate);border-radius:6px;padding:6px 10px;cursor:pointer;}
+  .copy-btn.copied{border-color:var(--teal);color:var(--teal);background:#ECFDF5;}
+
+  .qa-row{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;background:#fff;border:1px solid var(--line);border-left-width:4px;border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:13px;}
+  .qa-label{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;width:70px;flex-shrink:0;}
+  .qa-note{font-style:italic;color:#A8A196;font-size:12px;margin-left:auto;}
+
+  .note-box{background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px 16px;font-size:12px;line-height:1.6;color:var(--slate);}
+  .note-box strong{color:var(--ink);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Pardot / Account Engagement · Personalization</div>
+    <h1>Rule Translator</h1>
+    <p>Describe your if/then logic below. This tool tells you exactly which native Pardot feature builds it, gives you the click-by-click setup, and generates a full QA test matrix — every prospect profile you need to test, and what should render for each.</p>
+  </header>
+
+  <details class="explainer">
+    <summary>ⓘ Why doesn't this generate Apex code?</summary>
+    <div class="body">
+      Apex only runs on Salesforce's servers — it has no way to execute inside a Pardot email's WYSIWYG editor, so pasted Apex would just show up as plain text to recipients. The two things that actually do run in an email are <strong>Dynamic Content</strong> (Pardot's built-in, point-and-click rule builder — supports "equals," "contains," and number comparisons like "greater than") and <strong>HML</strong> (Handlebars Merge Language — a few lines of code pasted into the HTML source, but it can only check whether a field has any value, not compare it to a specific number or word). This tool routes you to whichever one actually fits your rule.
+    </div>
+  </details>
+
+  <section class="card top-ink">
+    <div class="section-label">1 · What field drives this?</div>
+    <div class="toggle-row" id="field-type-toggle">
+      <button class="toggle-btn active" data-type="text">Text / picklist (job title, industry…)</button>
+      <button class="toggle-btn" data-type="number">Number (score, revenue, field value…)</button>
+    </div>
+    <label class="field-label" for="field-name">Field name (as it appears on the prospect record)</label>
+    <input type="text" id="field-name" placeholder="e.g. Job Function">
+  </section>
+
+  <div class="section-label">2 · If / then rules</div>
+  <div class="warning hidden" id="order-warning">⚠ Pardot checks rules top to bottom and uses the <strong>first</strong> one that matches. With multiple "greater than" rules, put the highest number first — use the arrows on each card to reorder.</div>
+  <div id="rules-container"></div>
+  <button id="add-rule-btn">+ Add another rule</button>
+
+  <section class="card top-slate">
+    <div class="section-label">3 · Default content (when nothing above matches)</div>
+    <div id="default-content-editor"></div>
+  </section>
+
+  <button id="generate-btn">Generate setup steps &amp; QA matrix →</button>
+  <div id="validation-msg"></div>
+
+  <div id="results" class="hidden"></div>
+</div>
+
+<script>
+const BRANCH_COLORS = ["#0F766E","#B45309","#1D4ED8","#BE185D","#6D28D9","#047857","#B91C1C"];
+const TEXT_OPERATORS = [
+  {value:"equals",label:"is equal to"},
+  {value:"contains",label:"contains"},
+  {value:"not_blank",label:"is not blank (has any value)"}
+];
+const NUMBER_OPERATORS = [
+  {value:"gt",label:"is greater than"},
+  {value:"gte",label:"is greater than or equal to"},
+  {value:"lt",label:"is less than"},
+  {value:"lte",label:"is less than or equal to"},
+  {value:"equals",label:"is equal to"},
+  {value:"not_blank",label:"is not blank (has any value)"}
+];
+
+let fieldType = "text";
+let ruleIdCounter = 1;
+
+function opList(ft){ return ft === "number" ? NUMBER_OPERATORS : TEXT_OPERATORS; }
+function opLabel(ft, op){ const f = opList(ft).find(o=>o.value===op); return f ? f.label : op; }
+function escapeHtml(str){
+  return String(str==null?"":str).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function matches(op, ruleValue, testValue, ft){
+  if(op === "not_blank") return testValue !== "" && testValue !== null && testValue !== undefined;
+  if(ft === "number"){
+    const rv = parseFloat(ruleValue), tv = parseFloat(testValue);
+    if(isNaN(tv)) return false;
+    if(op==="gt") return tv > rv;
+    if(op==="gte") return tv >= rv;
+    if(op==="lt") return tv < rv;
+    if(op==="lte") return tv <= rv;
+    if(op==="equals") return tv === rv;
+  } else {
+    if(testValue==="" || testValue==null) return false;
+    const rv=(ruleValue||"").toLowerCase(), tv=String(testValue).toLowerCase();
+    if(op==="equals") return tv===rv;
+    if(op==="contains") return tv.includes(rv);
+  }
+  return false;
+}
+function evaluateRules(rules, ft, testValue){
+  for(const r of rules){ if(matches(r.operator, r.value, testValue, ft)) return r; }
+  return null;
+}
+function contentSummary(item){
+  if(!item) return "Default / fallback content";
+  if(item.contentType==="image") return "Image — " + (item.content || "(not set)");
+  return item.content || "(not set)";
+}
+
+// ---------- Content editor sub-template ----------
+function contentEditorHTML(idPrefix, contentType, content, placeholderText, placeholderImage){
+  return `
+    <div class="toggle-row" style="margin-bottom:8px;">
+      <button class="toggle-btn small content-type-btn ${contentType==='text'?'active':''}" data-target="${idPrefix}" data-value="text">Text sentence</button>
+      <button class="toggle-btn small content-type-btn ${contentType==='image'?'active':''}" data-target="${idPrefix}" data-value="image">Image</button>
+    </div>
+    <textarea class="content-text-input" data-target="${idPrefix}" placeholder="${placeholderText}" rows="2" style="${contentType==='image'?'display:none;':''}">${escapeHtml(content)}</textarea>
+    <input type="text" class="content-image-input" data-target="${idPrefix}" placeholder="${placeholderImage}" value="${escapeHtml(contentType==='image'?content:'')}" style="${contentType==='text'?'display:none;':''}">
+  `;
+}
+
+// ---------- Rule card ----------
+function ruleCardHTML(id, index, ft){
+  const color = BRANCH_COLORS[index % BRANCH_COLORS.length];
+  const options = opList(ft).map(o=>`<option value="${o.value}">${o.label}</option>`).join("");
+  return `
+  <div class="rule-card" data-rule-id="${id}" style="border-left-color:${color};">
+    <div class="rule-head">
+      <span class="rule-label" style="color:${color};">IF · Rule <span class="rule-index">${index+1}</span></span>
+      <div class="rule-actions">
+        <button data-action="move-up" title="Move up">▲</button>
+        <button data-action="move-down" title="Move down">▼</button>
+        <button data-action="remove" class="remove" title="Remove">✕</button>
+      </div>
+    </div>
+    <div class="rule-row">
+      <select class="rule-operator">${options}</select>
+      <input type="${ft==='number'?'number':'text'}" class="rule-value" placeholder="${ft==='number'?'e.g. 4':'e.g. Lawyer'}">
+    </div>
+    <div class="content-label">THEN show:</div>
+    <div class="content-editor" data-role="rule-content">
+      ${contentEditorHTML('rule-'+id, 'text', '', 'The sentence to show…', "Describe the image, e.g. 'lawyer-handshake.jpg — attorney shaking hands'")}
+    </div>
+  </div>`;
+}
+
+function renderRuleIndicesAndColors(){
+  const cards = [...document.querySelectorAll('.rule-card')];
+  cards.forEach((card, i)=>{
+    const color = BRANCH_COLORS[i % BRANCH_COLORS.length];
+    card.style.borderLeftColor = color;
+    card.querySelector('.rule-index').textContent = i+1;
+    card.querySelector('.rule-label').style.color = color;
+    const first = i===0, last = i===cards.length-1;
+    card.querySelector('[data-action="move-up"]').disabled = first;
+    card.querySelector('[data-action="move-down"]').disabled = last;
+    card.querySelector('[data-action="remove"]').disabled = cards.length<=1;
+  });
+}
+
+function updateOperatorOptionsForAllRules(){
+  document.querySelectorAll('.rule-card').forEach(card=>{
+    const sel = card.querySelector('.rule-operator');
+    const current = sel.value;
+    sel.innerHTML = opList(fieldType).map(o=>`<option value="${o.value}">${o.label}</option>`).join("");
+    // try to preserve selection if still valid, else default to first
+    if([...sel.options].some(o=>o.value===current)) sel.value = current;
+    toggleValueInput(card);
+    const valInput = card.querySelector('.rule-value');
+    valInput.type = fieldType==='number' ? 'number' : 'text';
+    valInput.placeholder = fieldType==='number' ? 'e.g. 4' : 'e.g. Lawyer';
+  });
+}
+
+function toggleValueInput(card){
+  const op = card.querySelector('.rule-operator').value;
+  const valInput = card.querySelector('.rule-value');
+  valInput.style.display = op==='not_blank' ? 'none' : '';
+}
+
+function updateOrderWarning(){
+  const cards = [...document.querySelectorAll('.rule-card')];
+  let count = 0;
+  if(fieldType==='number'){
+    cards.forEach(card=>{
+      const op = card.querySelector('.rule-operator').value;
+      if(['gt','gte','lt','lte'].includes(op)) count++;
+    });
+  }
+  document.getElementById('order-warning').classList.toggle('hidden', count < 2);
+}
+
+function addRuleCard(){
+  const container = document.getElementById('rules-container');
+  const id = ruleIdCounter++;
+  const index = container.children.length;
+  const div = document.createElement('div');
+  div.innerHTML = ruleCardHTML(id, index, fieldType);
+  container.appendChild(div.firstElementChild);
+  renderRuleIndicesAndColors();
+  updateOrderWarning();
+}
+
+// ---------- Event delegation ----------
+document.getElementById('field-type-toggle').addEventListener('click', e=>{
+  const btn = e.target.closest('.toggle-btn');
+  if(!btn) return;
+  fieldType = btn.dataset.type;
+  [...document.getElementById('field-type-toggle').children].forEach(b=>b.classList.toggle('active', b===btn));
+  updateOperatorOptionsForAllRules();
+  updateOrderWarning();
+});
+
+document.getElementById('add-rule-btn').addEventListener('click', addRuleCard);
+
+document.getElementById('rules-container').addEventListener('click', e=>{
+  const actionBtn = e.target.closest('[data-action]');
+  if(actionBtn){
+    const card = actionBtn.closest('.rule-card');
+    const action = actionBtn.dataset.action;
+    if(action==='remove'){
+      if(document.querySelectorAll('.rule-card').length>1){ card.remove(); renderRuleIndicesAndColors(); updateOrderWarning(); }
+    } else if(action==='move-up'){
+      const prev = card.previousElementSibling;
+      if(prev) card.parentNode.insertBefore(card, prev);
+      renderRuleIndicesAndColors();
+    } else if(action==='move-down'){
+      const next = card.nextElementSibling;
+      if(next) card.parentNode.insertBefore(next, card);
+      renderRuleIndicesAndColors();
+    }
+    return;
+  }
+  const ctBtn = e.target.closest('.content-type-btn');
+  if(ctBtn){
+    setContentType(ctBtn);
+  }
+});
+
+document.getElementById('rules-container').addEventListener('change', e=>{
+  if(e.target.classList.contains('rule-operator')){
+    toggleValueInput(e.target.closest('.rule-card'));
+    updateOrderWarning();
+  }
+});
+
+document.getElementById('default-content-editor').innerHTML =
+  contentEditorHTML('default', 'text', '', 'The fallback sentence to show…', "Describe the fallback image, e.g. 'generic-team.jpg'");
+document.getElementById('default-content-editor').addEventListener('click', e=>{
+  const ctBtn = e.target.closest('.content-type-btn');
+  if(ctBtn) setContentType(ctBtn);
+});
+
+function setContentType(btn){
+  const target = btn.dataset.target;
+  const value = btn.dataset.value;
+  const scope = btn.closest('.content-editor') || btn.parentElement.parentElement;
+  const group = btn.parentElement;
+  [...group.children].forEach(b=>b.classList.toggle('active', b===btn));
+  const wrap = btn.closest('.rule-card') || btn.closest('#default-content-editor');
+  const textEl = wrap.querySelector(`.content-text-input[data-target="${target}"]`);
+  const imgEl = wrap.querySelector(`.content-image-input[data-target="${target}"]`);
+  if(value==='text'){ textEl.style.display=''; imgEl.style.display='none'; }
+  else { textEl.style.display='none'; imgEl.style.display=''; }
+}
+
+// seed with one rule card
+addRuleCard();
+
+// ---------- Read current state from DOM ----------
+function readContentFrom(wrap, targetPrefix){
+  const activeBtn = wrap.querySelector(`.content-type-btn.active[data-target="${targetPrefix}"]`);
+  const contentType = activeBtn ? activeBtn.dataset.value : 'text';
+  const val = contentType==='text'
+    ? wrap.querySelector(`.content-text-input[data-target="${targetPrefix}"]`).value
+    : wrap.querySelector(`.content-image-input[data-target="${targetPrefix}"]`).value;
+  return { contentType, content: val };
+}
+
+function readRulesFromDOM(){
+  return [...document.querySelectorAll('.rule-card')].map(card=>{
+    const id = card.dataset.ruleId;
+    const operator = card.querySelector('.rule-operator').value;
+    const value = card.querySelector('.rule-value').value;
+    const c = readContentFrom(card, 'rule-'+id);
+    return { id, operator, value, contentType: c.contentType, content: c.content };
+  });
+}
+
+// ---------- QA matrix builder ----------
+function buildTestRows(rules, readyRules, ft, fieldName){
+  const rows = [];
+  readyRules.forEach((r, i)=>{
+    const color = BRANCH_COLORS[i % BRANCH_COLORS.length];
+    const label = "Rule " + (i+1);
+    if(r.operator==='not_blank'){
+      const tv = ft==='number' ? '1' : 'Sample Value';
+      rows.push({color,label,testValue:tv,expectedRule:r,note:'Any non-empty value'});
+      return;
+    }
+    if(ft==='number'){
+      const rv = parseFloat(r.value);
+      if(isNaN(rv)) return;
+      let inRangeVal=rv, boundaryVal=null;
+      if(r.operator==='gt'){ inRangeVal=rv+1; boundaryVal=rv; }
+      else if(r.operator==='gte'){ inRangeVal=rv; boundaryVal=rv-1; }
+      else if(r.operator==='lt'){ inRangeVal=rv-1; boundaryVal=rv; }
+      else if(r.operator==='lte'){ inRangeVal=rv; boundaryVal=rv+1; }
+      else if(r.operator==='equals'){ inRangeVal=rv; boundaryVal=null; }
+      const matchRow = evaluateRules(rules, ft, inRangeVal);
+      rows.push({color,label,testValue:String(inRangeVal),expectedRule:matchRow,note:'In-range value'});
+      if(boundaryVal!==null){
+        const boundaryMatch = evaluateRules(rules, ft, boundaryVal);
+        rows.push({color,label,testValue:String(boundaryVal),expectedRule:boundaryMatch,note:'Boundary edge case — check this carefully'});
+      }
+    } else {
+      const tv = r.operator==='equals' ? r.value : ('Sample ' + r.value + ' Text');
+      const matchRow = evaluateRules(rules, ft, tv);
+      rows.push({color,label,testValue:tv,expectedRule:matchRow,note:(r.operator==='contains'?'Contains the rule value':'Exact match')});
+    }
+  });
+  rows.push({color:'#6B7280',label:'Default',testValue:'(blank / matches nothing above)',expectedRule:null,note:'Fallback content'});
+  return rows;
+}
+
+// ---------- Generate ----------
+document.getElementById('generate-btn').addEventListener('click', ()=>{
+  const fieldName = document.getElementById('field-name').value.trim();
+  const rules = readRulesFromDOM();
+  const readyRules = rules.filter(r=>r.operator==='not_blank' || r.value!=='');
+  const defaultContent = readContentFrom(document.getElementById('default-content-editor'), 'default');
+
+  const msg = document.getElementById('validation-msg');
+  if(!fieldName || readyRules.length===0 || !defaultContent.content.trim()){
+    msg.style.display='block';
+    msg.textContent = 'Fill in the field name, at least one complete rule, and default content before generating.';
+    document.getElementById('results').classList.add('hidden');
+    return;
+  }
+  msg.style.display='none';
+
+  const singleBlankCheck = rules.length===1 && rules[0].operator==='not_blank';
+  const method = singleBlankCheck ? 'code' : 'dynamic';
+  const fieldSlug = fieldName.replace(/\s+/g,'_');
+
+  let html = '';
+  html += `<div class="banner ${method}">${method==='code' ? '⌨ This is a simple on/off check — you can hand-code it with HML.' : '✓ This needs value matching — build it using Dynamic Content in Pardot (no code).'}</div>`;
+
+  if(method==='dynamic'){
+    let steps = `<li><span class="step-num">1</span><span>In Pardot, go to <code class="chip">Content → Dynamic Content → Add Dynamic Content</code>. Name it something like <code class="chip">${escapeHtml(fieldName)} personalization</code> and base it on the field <code class="chip">${escapeHtml(fieldName)}</code>.</span></li>`;
+    readyRules.forEach((r,i)=>{
+      const imgNote = r.contentType==='image' ? ` <span style="color:var(--slate);">(upload the actual image file into this rule's box)</span>` : '';
+      steps += `<li><span class="step-num" style="background:${BRANCH_COLORS[i%BRANCH_COLORS.length]}">${i+2}</span><span>Add a rule: <code class="chip">${escapeHtml(fieldName)}</code> <strong>${escapeHtml(opLabel(fieldType,r.operator))}</strong> ${r.operator!=='not_blank' ? `<code class="chip">${escapeHtml(r.value)}</code>` : ''} → content: <em>${escapeHtml(contentSummary(r))}</em>${imgNote}</span></li>`;
+    });
+    steps += `<li><span class="step-num">${readyRules.length+2}</span><span>Set the <strong>base / default content</strong> to: <em>${escapeHtml(contentSummary(defaultContent))}</em></span></li>`;
+    steps += `<li><span class="step-num">${readyRules.length+3}</span><span>In the email's WYSIWYG editor, place your cursor where the content should appear, then use <code class="chip">Insert → Dynamic Content → [your name]</code>. Let Pardot insert the merge tag — don't hand-type it, since it includes an account-specific ID.</span></li>`;
+
+    html += `<div class="out-section"><div class="out-title">☑ Setup steps — Dynamic Content</div><div class="out-body"><ol class="steps">${steps}</ol></div></div>`;
+  } else {
+    const r0 = rules[0];
+    const ifContent = r0.contentType==='image' ? `[Insert image: ${r0.content||'...'}]` : (r0.content||'...');
+    const elseContent = defaultContent.contentType==='image' ? `[Insert image: ${defaultContent.content}]` : defaultContent.content;
+    const hmlCode = `{{#if Recipient.${fieldSlug||'Your_Field'}}}\n  ${ifContent}\n{{else}}\n  ${elseContent}\n{{/if}}`;
+    html += `<div class="out-section"><div class="out-title">⌨ HML code — paste into the email's HTML source</div><div class="out-body">
+      <p style="font-size:14px;color:var(--slate);margin-top:0;">Replace <code class="chip">Recipient.${escapeHtml(fieldSlug||'Your_Field')}</code> with the real merge field — grab it from Pardot's merge field picker so the API name is exactly right.</p>
+      <div class="code-block"><pre id="hml-code">${escapeHtml(hmlCode)}</pre><button class="copy-btn" id="copy-hml">Copy</button></div>
+    </div></div>`;
+  }
+
+  const testRows = buildTestRows(rules, readyRules, fieldType, fieldName);
+  let rowsHtml = testRows.map(row=>`
+    <div class="qa-row" style="border-left-color:${row.color};">
+      <span class="qa-label" style="color:${row.color};">${escapeHtml(row.label)}</span>
+      <span>Set <code class="chip">${escapeHtml(fieldName)}</code> = <code class="chip">${escapeHtml(row.testValue)}</code></span>
+      <span>Expect: <strong>${escapeHtml(contentSummary(row.expectedRule))}</strong></span>
+      <span class="qa-note">${escapeHtml(row.note)}</span>
+    </div>`).join("");
+  const matrixText = fieldName + " test matrix\n" + testRows.map(r=>`${r.label}\t${fieldName} = ${r.testValue}\tExpect: ${contentSummary(r.expectedRule)}\t(${r.note})`).join("\n");
+
+  html += `<div class="out-section"><div class="out-title">☑ QA test matrix — build these test prospects</div><div class="out-body">
+    <p style="font-size:14px;color:var(--slate);margin-top:0;">Set a test prospect's <code class="chip">${escapeHtml(fieldName)}</code> to each value below, send yourself a test email, and confirm the content shown matches "Expected."</p>
+    ${rowsHtml}
+    <button class="copy-btn" id="copy-matrix" style="position:static;margin-top:8px;">Copy full matrix</button>
+  </div></div>`;
+
+  html += `<div class="note-box"><strong>Before sending live:</strong> use Pardot's "Send Test Email" on each test prospect above rather than trusting the in-editor preview — preview panes don't always evaluate Dynamic Content and HML the same way a real send does. Also double check any image branches use a fully-hosted, absolute image URL, not a local file path.</div>`;
+
+  const results = document.getElementById('results');
+  results.innerHTML = html;
+  results.classList.remove('hidden');
+
+  const copyHml = document.getElementById('copy-hml');
+  if(copyHml){
+    copyHml.addEventListener('click', ()=>copyToClipboard(document.getElementById('hml-code').textContent, copyHml));
+  }
+  const copyMatrix = document.getElementById('copy-matrix');
+  if(copyMatrix){
+    copyMatrix.addEventListener('click', ()=>copyToClipboard(matrixText, copyMatrix));
+  }
+
+  results.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+function copyToClipboard(text, btn){
+  navigator.clipboard.writeText(text).then(()=>{
+    const original = btn.textContent;
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent = original; btn.classList.remove('copied'); }, 1500);
+  }).catch(()=>{});
+}
+</script>
+</body>
+</html>
