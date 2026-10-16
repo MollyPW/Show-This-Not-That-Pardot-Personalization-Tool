@@ -4,86 +4,107 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Show This, Not That: A Pardot Personalization Translator</title>
+<meta name="description" content="Describe your Pardot / Account Engagement if-then personalization logic and get the exact native feature to use, click-by-click setup steps, and a full QA test matrix to verify it.">
+<link rel="icon" type="image/svg+xml" href="https://mollypw.com/assets/images/logo.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Poppins:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#1B2430; --paper:#FAF7F2; --line:#DCD5C6; --teal:#0F766E;
-    --amber:#B45309; --slate:#5B6472; --code-bg:#F0EDE4; --code-text:#3D3428;
+    /* Molly's brand tokens — the only colors this build draws from. */
+    --navy:#1D3557;
+    --red:#E63946;
+    --steel:#457B9D;
+    --teal-brand:#A8DADC;
+    --offwhite:#F1FAEE;
+    --gold:#C9A227;
+    --white:#FFFFFF;
+    --navy-soft:rgba(29,53,87,.68);
+    --rule:rgba(29,53,87,.16);
+    --tint:rgba(168,218,220,.30);
+
+    /* aliases so the rest of this file reads clearly */
+    --ink:var(--navy);
+    --paper:var(--offwhite);
+    --line:var(--rule);
+    --teal:var(--teal-brand);
+    --slate:var(--navy-soft);  /* safe on both white cards and the offwhite base */
+    --code-bg:rgba(29,53,87,.08);
+    --code-text:var(--navy);
   }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;}
-  .mono{font-family:'IBM Plex Mono',monospace;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;}
+  .mono{font-family:'DM Mono',monospace;}
   .wrap{max-width:760px;margin:0 auto;padding:32px 16px 64px;}
   header{border-bottom:2px solid var(--ink);padding-bottom:24px;margin-bottom:24px;}
-  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--amber);font-weight:600;margin-bottom:8px;}
-  h1{font-family:'IBM Plex Mono',monospace;font-size:26px;margin:0;}
+  .eyebrow{font-family:'DM Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--navy-soft);font-weight:600;margin-bottom:8px;}
+  h1{font-family:'Poppins',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.01em;margin:0;color:var(--navy);}
   header p{color:var(--slate);font-size:14px;margin-top:10px;line-height:1.5;}
 
   details.explainer{background:#fff;border:1px solid var(--line);border-radius:8px;margin-bottom:24px;}
-  details.explainer summary{cursor:pointer;padding:12px 16px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;}
+  details.explainer summary{cursor:pointer;padding:12px 16px;font-family:'DM Mono',monospace;font-weight:600;font-size:14px;}
   details.explainer .body{padding:0 16px 16px;font-size:14px;line-height:1.6;color:var(--slate);}
   details.explainer strong{color:var(--ink);}
 
-  .section-label{font-family:'IBM Plex Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--slate);font-weight:600;margin-bottom:12px;}
+  .section-label{font-family:'DM Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--slate);font-weight:600;margin-bottom:12px;}
   .card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:24px;}
   .card.top-ink{border-top:3px solid var(--ink);}
   .card.top-slate{border-top:3px solid var(--slate);}
 
   .toggle-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
-  .toggle-btn{flex:1;min-width:140px;padding:9px 12px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--slate);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;cursor:pointer;}
+  .toggle-btn{flex:1;min-width:140px;padding:9px 12px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--slate);font-family:'DM Mono',monospace;font-size:13px;font-weight:600;cursor:pointer;}
   .toggle-btn.active{background:var(--ink);border-color:var(--ink);color:#fff;}
   .toggle-btn.small{flex:none;min-width:0;padding:6px 12px;font-size:12px;}
 
   label.field-label{display:block;font-size:12px;font-weight:600;color:var(--slate);margin-bottom:4px;}
   input[type=text],input[type=number],textarea,select{
     width:100%;padding:9px 10px;border-radius:6px;border:1px solid var(--line);
-    font-family:'IBM Plex Sans',sans-serif;font-size:14px;color:var(--ink);background:#fff;
+    font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:#fff;
   }
   textarea{resize:vertical;min-height:44px;}
 
-  .warning{display:flex;gap:8px;align-items:flex-start;background:#FFFBEB;border:1px solid var(--amber);color:#78350F;border-radius:6px;padding:10px 12px;font-size:13px;margin-bottom:12px;}
+  .warning{display:flex;gap:8px;align-items:flex-start;background:var(--white);border:1px solid var(--gold);color:var(--navy);border-radius:6px;padding:10px 12px;font-size:13px;margin-bottom:12px;}
   .warning.hidden{display:none;}
 
   .rule-card{background:#fff;border:1px solid var(--line);border-left-width:4px;border-radius:8px;padding:14px;margin-bottom:12px;}
   .rule-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-  .rule-label{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;}
+  .rule-label{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;}
   .rule-actions button{background:none;border:none;cursor:pointer;color:var(--slate);padding:4px;font-size:14px;}
-  .rule-actions button.remove{color:#B91C1C;}
+  .rule-actions button.remove{color:var(--red);}
   .rule-actions button:disabled{opacity:.25;cursor:default;}
   .rule-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
   .rule-row select{flex:1;min-width:160px;}
   .rule-row input{flex:1;min-width:120px;}
   .content-label{font-size:12px;font-weight:600;color:var(--slate);margin-bottom:6px;}
 
-  #add-rule-btn{display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;border:1px solid var(--ink);color:var(--ink);background:#fff;border-radius:6px;padding:9px 14px;cursor:pointer;margin-bottom:24px;}
+  #add-rule-btn{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-weight:600;font-size:13px;border:1px solid var(--ink);color:var(--ink);background:#fff;border-radius:6px;padding:9px 14px;cursor:pointer;margin-bottom:24px;}
 
-  #generate-btn{display:block;width:100%;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;background:var(--ink);color:#fff;border:none;border-radius:8px;padding:14px;cursor:pointer;margin-bottom:8px;}
-  #validation-msg{color:#B91C1C;font-size:13px;margin-bottom:24px;display:none;}
+  #generate-btn{display:block;width:100%;font-family:'DM Mono',monospace;font-weight:700;font-size:15px;background:var(--ink);color:#fff;border:none;border-radius:8px;padding:14px;cursor:pointer;margin-bottom:8px;}
+  #validation-msg{color:var(--navy);background:var(--white);border-left:3px solid var(--red);border-radius:4px;padding:8px 12px;font-size:13px;margin-bottom:24px;display:none;}
 
   #results{border-top:2px solid var(--ink);padding-top:24px;margin-top:16px;}
   #results.hidden{display:none;}
-  .banner{display:flex;align-items:center;gap:10px;border-radius:8px;padding:12px 16px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;margin-bottom:20px;}
-  .banner.code{background:#FFFBEB;border:1px solid var(--amber);color:#78350F;}
-  .banner.dynamic{background:#ECFDF5;border:1px solid var(--teal);color:#064E3B;}
+  .banner{display:flex;align-items:center;gap:10px;border-radius:8px;padding:12px 16px;font-family:'DM Mono',monospace;font-weight:600;font-size:14px;margin-bottom:20px;}
+  .banner.code{background:var(--white);border:1px solid var(--gold);color:var(--navy);}
+  .banner.dynamic{background:var(--tint);border:1px solid var(--teal);color:var(--navy);}
 
   .out-section{margin-bottom:32px;}
-  .out-title{display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;margin-bottom:12px;}
+  .out-title{display:flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-weight:700;font-size:14px;margin-bottom:12px;}
   .out-body{background:#FDFCFA;border:1px solid var(--line);border-radius:8px;padding:16px;}
 
   ol.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;}
   ol.steps li{display:flex;gap:10px;font-size:14px;line-height:1.6;}
-  .step-num{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;}
+  .step-num{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;}
 
-  code.chip{background:var(--code-bg);color:var(--code-text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:2px 6px;border-radius:4px;}
+  code.chip{background:var(--code-bg);color:var(--code-text);font-family:'DM Mono',monospace;font-size:12px;padding:2px 6px;border-radius:4px;}
 
   .code-block{position:relative;background:var(--ink);border-radius:8px;overflow:hidden;}
-  .code-block pre{margin:0;padding:16px;color:#E8E4DA;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.6;overflow-x:auto;white-space:pre-wrap;}
-  .copy-btn{position:absolute;top:10px;right:10px;font-family:'IBM Plex Mono',monospace;font-size:12px;background:#fff;border:1px solid var(--line);color:var(--slate);border-radius:6px;padding:6px 10px;cursor:pointer;}
-  .copy-btn.copied{border-color:var(--teal);color:var(--teal);background:#ECFDF5;}
+  .code-block pre{margin:0;padding:16px;color:var(--offwhite);font-family:'DM Mono',monospace;font-size:12px;line-height:1.6;overflow-x:auto;white-space:pre-wrap;}
+  .copy-btn{position:absolute;top:10px;right:10px;font-family:'DM Mono',monospace;font-size:12px;background:#fff;border:1px solid var(--line);color:var(--slate);border-radius:6px;padding:6px 10px;cursor:pointer;}
+  .copy-btn.copied{border-color:var(--teal);color:var(--navy);background:var(--tint);}
 
   .qa-row{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;background:#fff;border:1px solid var(--line);border-left-width:4px;border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:13px;}
-  .qa-label{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;width:70px;flex-shrink:0;}
+  .qa-label{font-family:'DM Mono',monospace;font-weight:700;font-size:12px;width:70px;flex-shrink:0;}
   .qa-note{font-style:italic;color:#A8A196;font-size:12px;margin-left:auto;}
 
   .note-box{background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px 16px;font-size:12px;line-height:1.6;color:var(--slate);}
@@ -129,8 +150,8 @@
 </script>
 </head>
 <body>
-<div class="home-bar">
-  <a href="https://mollypw.github.io/" aria-label="Back to the mollypw.github.io home page">
+<header class="home-bar">
+  <a href="https://mollypw.com/" aria-label="Back to the mollypw.com home page">
     <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" fill="none" stroke="#C9A227" stroke-width="1">
       <g stroke-linecap="round" stroke-linejoin="round">
         <circle cx="119" cy="137" r="99" stroke-width="1.5"></circle>
@@ -142,9 +163,9 @@
     </svg>
     Home
   </a>
-</div>
+</header>
 
-<div class="wrap">
+<main class="wrap">
   <header>
     <div class="eyebrow">Pardot / Account Engagement · Personalization</div>
     <h1>Pardot Personalization Rule Translator</h1>
@@ -161,8 +182,8 @@
   <section class="card top-ink">
     <div class="section-label">1 · What field drives this?</div>
     <div class="toggle-row" id="field-type-toggle">
-      <button class="toggle-btn active" data-type="text">Text / picklist (job title, industry…)</button>
-      <button class="toggle-btn" data-type="number">Number (score, revenue, field value…)</button>
+      <button class="toggle-btn active" data-type="text" aria-pressed="true">Text / picklist (job title, industry…)</button>
+      <button class="toggle-btn" data-type="number" aria-pressed="false">Number (score, revenue, field value…)</button>
     </div>
     <label class="field-label" for="field-name">Field name (as it appears on the prospect record)</label>
     <input type="text" id="field-name" placeholder="e.g. Job Function">
@@ -182,10 +203,14 @@
   <div id="validation-msg"></div>
 
   <div id="results" class="hidden"></div>
-</div>
+</main>
 
 <script>
-const BRANCH_COLORS = ["#0F766E","#B45309","#1D4ED8","#BE185D","#6D28D9","#047857","#B91C1C"];
+// Rule/branch identity colors are a small functional exception to the 6-token rule
+// (same reasoning as Print Doctor's dye-channel swatches): used ONLY as a 4px
+// non-text border-left accent, which only needs 3:1 contrast, not the 4.5:1 text
+// threshold. All label/step-number TEXT stays navy so it is AA-safe everywhere.
+const BRANCH_COLORS = ["#1D3557","#E63946","#457B9D"];
 const TEXT_OPERATORS = [
   {value:"equals",label:"is equal to"},
   {value:"contains",label:"contains"},
@@ -241,8 +266,8 @@ function contentSummary(item){
 function contentEditorHTML(idPrefix, contentType, content, placeholderText, placeholderImage){
   return `
     <div class="toggle-row" style="margin-bottom:8px;">
-      <button class="toggle-btn small content-type-btn ${contentType==='text'?'active':''}" data-target="${idPrefix}" data-value="text">Text sentence</button>
-      <button class="toggle-btn small content-type-btn ${contentType==='image'?'active':''}" data-target="${idPrefix}" data-value="image">Image</button>
+      <button class="toggle-btn small content-type-btn ${contentType==='text'?'active':''}" data-target="${idPrefix}" data-value="text" aria-pressed="${contentType==='text'}">Text sentence</button>
+      <button class="toggle-btn small content-type-btn ${contentType==='image'?'active':''}" data-target="${idPrefix}" data-value="image" aria-pressed="${contentType==='image'}">Image</button>
     </div>
     <textarea class="content-text-input" data-target="${idPrefix}" placeholder="${placeholderText}" rows="2" style="${contentType==='image'?'display:none;':''}">${escapeHtml(content)}</textarea>
     <input type="text" class="content-image-input" data-target="${idPrefix}" placeholder="${placeholderImage}" value="${escapeHtml(contentType==='image'?content:'')}" style="${contentType==='text'?'display:none;':''}">
@@ -256,7 +281,7 @@ function ruleCardHTML(id, index, ft){
   return `
   <div class="rule-card" data-rule-id="${id}" style="border-left-color:${color};">
     <div class="rule-head">
-      <span class="rule-label" style="color:${color};">IF · Rule <span class="rule-index">${index+1}</span></span>
+      <span class="rule-label">IF · Rule <span class="rule-index">${index+1}</span></span>
       <div class="rule-actions">
         <button data-action="move-up" title="Move up">▲</button>
         <button data-action="move-down" title="Move down">▼</button>
@@ -264,8 +289,8 @@ function ruleCardHTML(id, index, ft){
       </div>
     </div>
     <div class="rule-row">
-      <select class="rule-operator">${options}</select>
-      <input type="${ft==='number'?'number':'text'}" class="rule-value" placeholder="${ft==='number'?'e.g. 4':'e.g. Lawyer'}">
+      <select class="rule-operator" aria-label="Comparison for rule ${index+1}">${options}</select>
+      <input type="${ft==='number'?'number':'text'}" class="rule-value" aria-label="Value to compare for rule ${index+1}" placeholder="${ft==='number'?'e.g. 4':'e.g. Lawyer'}">
     </div>
     <div class="content-label">THEN show:</div>
     <div class="content-editor" data-role="rule-content">
@@ -280,7 +305,7 @@ function renderRuleIndicesAndColors(){
     const color = BRANCH_COLORS[i % BRANCH_COLORS.length];
     card.style.borderLeftColor = color;
     card.querySelector('.rule-index').textContent = i+1;
-    card.querySelector('.rule-label').style.color = color;
+    // rule-label text stays navy (set in CSS) for AA-safe contrast at every branch color
     const first = i===0, last = i===cards.length-1;
     card.querySelector('[data-action="move-up"]').disabled = first;
     card.querySelector('[data-action="move-down"]').disabled = last;
@@ -336,7 +361,7 @@ document.getElementById('field-type-toggle').addEventListener('click', e=>{
   const btn = e.target.closest('.toggle-btn');
   if(!btn) return;
   fieldType = btn.dataset.type;
-  [...document.getElementById('field-type-toggle').children].forEach(b=>b.classList.toggle('active', b===btn));
+  [...document.getElementById('field-type-toggle').children].forEach(b=>{ const on = b===btn; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
   updateOperatorOptionsForAllRules();
   updateOrderWarning();
 });
@@ -386,7 +411,7 @@ function setContentType(btn){
   const value = btn.dataset.value;
   const scope = btn.closest('.content-editor') || btn.parentElement.parentElement;
   const group = btn.parentElement;
-  [...group.children].forEach(b=>b.classList.toggle('active', b===btn));
+  [...group.children].forEach(b=>{ const on = b===btn; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
   const wrap = btn.closest('.rule-card') || btn.closest('#default-content-editor');
   const textEl = wrap.querySelector(`.content-text-input[data-target="${target}"]`);
   const imgEl = wrap.querySelector(`.content-image-input[data-target="${target}"]`);
@@ -449,7 +474,7 @@ function buildTestRows(rules, readyRules, ft, fieldName){
       rows.push({color,label,testValue:tv,expectedRule:matchRow,note:(r.operator==='contains'?'Contains the rule value':'Exact match')});
     }
   });
-  rows.push({color:'#6B7280',label:'Default',testValue:'(blank / matches nothing above)',expectedRule:null,note:'Fallback content'});
+  rows.push({color:'rgba(29,53,87,.45)',label:'Default',testValue:'(blank / matches nothing above)',expectedRule:null,note:'Fallback content'});
   return rows;
 }
 
@@ -480,7 +505,7 @@ document.getElementById('generate-btn').addEventListener('click', ()=>{
     let steps = `<li><span class="step-num">1</span><span>In Pardot, go to <code class="chip">Content → Dynamic Content → Add Dynamic Content</code>. Name it something like <code class="chip">${escapeHtml(fieldName)} personalization</code> and base it on the field <code class="chip">${escapeHtml(fieldName)}</code>.</span></li>`;
     readyRules.forEach((r,i)=>{
       const imgNote = r.contentType==='image' ? ` <span style="color:var(--slate);">(upload the actual image file into this rule's box)</span>` : '';
-      steps += `<li><span class="step-num" style="background:${BRANCH_COLORS[i%BRANCH_COLORS.length]}">${i+2}</span><span>Add a rule: <code class="chip">${escapeHtml(fieldName)}</code> <strong>${escapeHtml(opLabel(fieldType,r.operator))}</strong> ${r.operator!=='not_blank' ? `<code class="chip">${escapeHtml(r.value)}</code>` : ''} → content: <em>${escapeHtml(contentSummary(r))}</em>${imgNote}</span></li>`;
+      steps += `<li><span class="step-num">${i+2}</span><span>Add a rule: <code class="chip">${escapeHtml(fieldName)}</code> <strong>${escapeHtml(opLabel(fieldType,r.operator))}</strong> ${r.operator!=='not_blank' ? `<code class="chip">${escapeHtml(r.value)}</code>` : ''} → content: <em>${escapeHtml(contentSummary(r))}</em>${imgNote}</span></li>`;
     });
     steps += `<li><span class="step-num">${readyRules.length+2}</span><span>Set the <strong>base / default content</strong> to: <em>${escapeHtml(contentSummary(defaultContent))}</em></span></li>`;
     steps += `<li><span class="step-num">${readyRules.length+3}</span><span>In the email's WYSIWYG editor, place your cursor where the content should appear, then use <code class="chip">Insert → Dynamic Content → [your name]</code>. Let Pardot insert the merge tag — don't hand-type it, since it includes an account-specific ID.</span></li>`;
@@ -500,7 +525,7 @@ document.getElementById('generate-btn').addEventListener('click', ()=>{
   const testRows = buildTestRows(rules, readyRules, fieldType, fieldName);
   let rowsHtml = testRows.map(row=>`
     <div class="qa-row" style="border-left-color:${row.color};">
-      <span class="qa-label" style="color:${row.color};">${escapeHtml(row.label)}</span>
+      <span class="qa-label">${escapeHtml(row.label)}</span>
       <span>Set <code class="chip">${escapeHtml(fieldName)}</code> = <code class="chip">${escapeHtml(row.testValue)}</code></span>
       <span>Expect: <strong>${escapeHtml(contentSummary(row.expectedRule))}</strong></span>
       <span class="qa-note">${escapeHtml(row.note)}</span>
