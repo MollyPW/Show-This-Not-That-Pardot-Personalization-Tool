@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Poppins:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    /* Molly's brand tokens — the only colors this build draws from. */
+    /* Molly's brand tokens - the only colors this build draws from. */
     --navy:#1D3557;
     --red:#E63946;
     --steel:#457B9D;
@@ -169,13 +169,13 @@
   <header>
     <div class="eyebrow">Pardot / Account Engagement · Personalization</div>
     <h1>Pardot Personalization Rule Translator</h1>
-    <p>Describe your if/then logic below. This tool tells you exactly which native Pardot feature builds it, gives you the click-by-click setup, and generates a full QA test matrix — every prospect profile you need to test, and what should render for each.</p>
+    <p>Describe your if/then logic below. This tool tells you exactly which native Pardot feature builds it, gives you the click-by-click setup, and generates a full QA test matrix - every prospect profile you need to test, and what should render for each.</p>
   </header>
 
   <details class="explainer">
     <summary>ⓘ Why doesn't this generate Apex code?</summary>
     <div class="body">
-      Apex only runs on Salesforce's servers — it has no way to execute inside a Pardot email's WYSIWYG editor, so pasted Apex would just show up as plain text to recipients. The two things that actually do run in an email are <strong>Dynamic Content</strong> (Pardot's built-in, point-and-click rule builder — supports "equals," "contains," and number comparisons like "greater than") and <strong>HML</strong> (Handlebars Merge Language — a few lines of code pasted into the HTML source, but it can only check whether a field has any value, not compare it to a specific number or word). This tool routes you to whichever one actually fits your rule.
+      Apex only runs on Salesforce's servers - it has no way to execute inside a Pardot email's WYSIWYG editor, so pasted Apex would just show up as plain text to recipients. The two things that actually do run in an email are <strong>Dynamic Content</strong> (Pardot's built-in, point-and-click rule builder - supports "equals," "contains," and number comparisons like "greater than") and <strong>HML</strong> (Handlebars Merge Language - a few lines of code pasted into the HTML source, but it can only check whether a field has any value, not compare it to a specific number or word). This tool routes you to whichever one actually fits your rule.
     </div>
   </details>
 
@@ -190,7 +190,7 @@
   </section>
 
   <div class="section-label">2 · If / then rules</div>
-  <div class="warning hidden" id="order-warning">⚠ Pardot checks rules top to bottom and uses the <strong>first</strong> one that matches. With multiple "greater than" rules, put the highest number first — use the arrows on each card to reorder.</div>
+  <div class="warning hidden" id="order-warning">⚠ Pardot checks rules top to bottom and uses the <strong>first</strong> one that matches. With multiple "greater than" rules, put the highest number first - use the arrows on each card to reorder.</div>
   <div id="rules-container"></div>
   <button id="add-rule-btn">+ Add another rule</button>
 
@@ -258,7 +258,7 @@ function evaluateRules(rules, ft, testValue){
 }
 function contentSummary(item){
   if(!item) return "Default / fallback content";
-  if(item.contentType==="image") return "Image — " + (item.content || "(not set)");
+  if(item.contentType==="image") return "Image - " + (item.content || "(not set)");
   return item.content || "(not set)";
 }
 
@@ -294,7 +294,7 @@ function ruleCardHTML(id, index, ft){
     </div>
     <div class="content-label">THEN show:</div>
     <div class="content-editor" data-role="rule-content">
-      ${contentEditorHTML('rule-'+id, 'text', '', 'The sentence to show…', "Describe the image, e.g. 'lawyer-handshake.jpg — attorney shaking hands'")}
+      ${contentEditorHTML('rule-'+id, 'text', '', 'The sentence to show…', "Describe the image, e.g. 'lawyer-handshake.jpg - attorney shaking hands'")}
     </div>
   </div>`;
 }
@@ -466,7 +466,7 @@ function buildTestRows(rules, readyRules, ft, fieldName){
       rows.push({color,label,testValue:String(inRangeVal),expectedRule:matchRow,note:'In-range value'});
       if(boundaryVal!==null){
         const boundaryMatch = evaluateRules(rules, ft, boundaryVal);
-        rows.push({color,label,testValue:String(boundaryVal),expectedRule:boundaryMatch,note:'Boundary edge case — check this carefully'});
+        rows.push({color,label,testValue:String(boundaryVal),expectedRule:boundaryMatch,note:'Boundary edge case - check this carefully'});
       }
     } else {
       const tv = r.operator==='equals' ? r.value : ('Sample ' + r.value + ' Text');
@@ -499,7 +499,7 @@ document.getElementById('generate-btn').addEventListener('click', ()=>{
   const fieldSlug = fieldName.replace(/\s+/g,'_');
 
   let html = '';
-  html += `<div class="banner ${method}">${method==='code' ? '⌨ This is a simple on/off check — you can hand-code it with HML.' : '✓ This needs value matching — build it using Dynamic Content in Pardot (no code).'}</div>`;
+  html += `<div class="banner ${method}">${method==='code' ? '⌨ This is a simple on/off check - you can hand-code it with HML.' : '✓ This needs value matching - build it using Dynamic Content in Pardot (no code).'}</div>`;
 
   if(method==='dynamic'){
     let steps = `<li><span class="step-num">1</span><span>In Pardot, go to <code class="chip">Content → Dynamic Content → Add Dynamic Content</code>. Name it something like <code class="chip">${escapeHtml(fieldName)} personalization</code> and base it on the field <code class="chip">${escapeHtml(fieldName)}</code>.</span></li>`;
@@ -508,16 +508,16 @@ document.getElementById('generate-btn').addEventListener('click', ()=>{
       steps += `<li><span class="step-num">${i+2}</span><span>Add a rule: <code class="chip">${escapeHtml(fieldName)}</code> <strong>${escapeHtml(opLabel(fieldType,r.operator))}</strong> ${r.operator!=='not_blank' ? `<code class="chip">${escapeHtml(r.value)}</code>` : ''} → content: <em>${escapeHtml(contentSummary(r))}</em>${imgNote}</span></li>`;
     });
     steps += `<li><span class="step-num">${readyRules.length+2}</span><span>Set the <strong>base / default content</strong> to: <em>${escapeHtml(contentSummary(defaultContent))}</em></span></li>`;
-    steps += `<li><span class="step-num">${readyRules.length+3}</span><span>In the email's WYSIWYG editor, place your cursor where the content should appear, then use <code class="chip">Insert → Dynamic Content → [your name]</code>. Let Pardot insert the merge tag — don't hand-type it, since it includes an account-specific ID.</span></li>`;
+    steps += `<li><span class="step-num">${readyRules.length+3}</span><span>In the email's WYSIWYG editor, place your cursor where the content should appear, then use <code class="chip">Insert → Dynamic Content → [your name]</code>. Let Pardot insert the merge tag - don't hand-type it, since it includes an account-specific ID.</span></li>`;
 
-    html += `<div class="out-section"><div class="out-title">☑ Setup steps — Dynamic Content</div><div class="out-body"><ol class="steps">${steps}</ol></div></div>`;
+    html += `<div class="out-section"><div class="out-title">☑ Setup steps - Dynamic Content</div><div class="out-body"><ol class="steps">${steps}</ol></div></div>`;
   } else {
     const r0 = rules[0];
     const ifContent = r0.contentType==='image' ? `[Insert image: ${r0.content||'...'}]` : (r0.content||'...');
     const elseContent = defaultContent.contentType==='image' ? `[Insert image: ${defaultContent.content}]` : defaultContent.content;
     const hmlCode = `{{#if Recipient.${fieldSlug||'Your_Field'}}}\n  ${ifContent}\n{{else}}\n  ${elseContent}\n{{/if}}`;
-    html += `<div class="out-section"><div class="out-title">⌨ HML code — paste into the email's HTML source</div><div class="out-body">
-      <p style="font-size:14px;color:var(--slate);margin-top:0;">Replace <code class="chip">Recipient.${escapeHtml(fieldSlug||'Your_Field')}</code> with the real merge field — grab it from Pardot's merge field picker so the API name is exactly right.</p>
+    html += `<div class="out-section"><div class="out-title">⌨ HML code - paste into the email's HTML source</div><div class="out-body">
+      <p style="font-size:14px;color:var(--slate);margin-top:0;">Replace <code class="chip">Recipient.${escapeHtml(fieldSlug||'Your_Field')}</code> with the real merge field - grab it from Pardot's merge field picker so the API name is exactly right.</p>
       <div class="code-block"><pre id="hml-code">${escapeHtml(hmlCode)}</pre><button class="copy-btn" id="copy-hml">Copy</button></div>
     </div></div>`;
   }
@@ -532,13 +532,13 @@ document.getElementById('generate-btn').addEventListener('click', ()=>{
     </div>`).join("");
   const matrixText = fieldName + " test matrix\n" + testRows.map(r=>`${r.label}\t${fieldName} = ${r.testValue}\tExpect: ${contentSummary(r.expectedRule)}\t(${r.note})`).join("\n");
 
-  html += `<div class="out-section"><div class="out-title">☑ QA test matrix — build these test prospects</div><div class="out-body">
+  html += `<div class="out-section"><div class="out-title">☑ QA test matrix - build these test prospects</div><div class="out-body">
     <p style="font-size:14px;color:var(--slate);margin-top:0;">Set a test prospect's <code class="chip">${escapeHtml(fieldName)}</code> to each value below, send yourself a test email, and confirm the content shown matches "Expected."</p>
     ${rowsHtml}
     <button class="copy-btn" id="copy-matrix" style="position:static;margin-top:8px;">Copy full matrix</button>
   </div></div>`;
 
-  html += `<div class="note-box"><strong>Before sending live:</strong> use Pardot's "Send Test Email" on each test prospect above rather than trusting the in-editor preview — preview panes don't always evaluate Dynamic Content and HML the same way a real send does. Also double check any image branches use a fully-hosted, absolute image URL, not a local file path.</div>`;
+  html += `<div class="note-box"><strong>Before sending live:</strong> use Pardot's "Send Test Email" on each test prospect above rather than trusting the in-editor preview - preview panes don't always evaluate Dynamic Content and HML the same way a real send does. Also double check any image branches use a fully-hosted, absolute image URL, not a local file path.</div>`;
 
   const results = document.getElementById('results');
   results.innerHTML = html;
